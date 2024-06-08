@@ -1,0 +1,395 @@
+openapi: 3.0.1
+info:
+  description: Swagger definition for Expenses Manager application
+  version: "1.0.0"
+  title: Expenses Manager API
+tags:
+- name: "expense"
+  description: "Manage expenses"
+- name: "user"
+  description: "Manage users"
+- name: "category"
+  description: "Manage categories"
+- name: "currency"
+  description: "Manage currencies"
+- name: "total"
+  description: "Manage totals"
+paths:
+  /expense:
+    post:
+      tags:
+      - "expense"
+      summary: "Add a new expense"
+      operationId: "addExpense"
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref:  "#/components/schemas/CreateExpense"
+        description: Expense object that needs to be added
+        required: true
+      responses:
+        "201":
+          description: "Created"
+        "400":
+          description: "Bad request"
+  /expense/extractAndSaveExpensesFromPdf/{userId}:
+    post:
+      tags:
+        - "expense"
+      summary: "Extract expenses from PDF and save"
+      operationId: "extractAndSaveExpensesFromPdf"
+      parameters:
+        - name: "userId"
+          in: path
+          description: "Id of current user"
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                pdfFile:
+                  type: string
+                  format: binary
+        description: "PDF file to import expenses from"
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expenses'
+          description: "Created"
+        '400':
+          description: "Bad request"
+  /expense/byUser/{userId}:
+    get:
+      tags:
+      - "expense"
+      summary: "Find all expenses by user id"
+      description: "Return all expenses for the given user id"
+      operationId: "getExpensesByUserId"
+      parameters:
+        - name: "userId"
+          in: path
+          description: "Id of current user"
+          required: true
+          schema: 
+            type: integer
+            format: int64
+        - in: query
+          name: startDate
+          schema:
+            type: "string"
+            format: date
+          description: Optional - Beginning of date interval from which the expenses are to be returned
+        - in: query
+          name: endDate
+          schema:
+            type: "string"
+            format: date
+          description: Optional - End of date interval from which the expenses are to be returned - if specified, startDate has to be specified as well; if not specified, expenses will be returned up until the current date
+      responses:
+        '200':
+          content:
+           application/json:
+             schema:
+              $ref: '#/components/schemas/Expenses'
+          description: "Ok"
+        "404":
+          description: "User not found"
+  /expense/{expenseId}:
+    put:
+      tags:
+      - "expense"
+      summary: "Update an expense"
+      operationId: "updateExpense"
+      parameters:
+       - description: Id of the expense that needs to be updated
+         in: path
+         name: expenseId
+         required: true
+         schema:
+           type: integer
+           format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref:  "#/components/schemas/CreateExpense"
+        description: Expense object that needs to be updated
+        required: true  
+      responses:
+        "200":
+          description: "Ok"
+        "400":
+          description: "Bad request"
+        "404":
+          description: "Expense not found"
+    delete:
+      tags:
+      - "expense"
+      summary: "Delete an expense"
+      operationId: "deleteExpense"
+      parameters:
+       - description: Id of the expense that needs to be deleted
+         in: path
+         name: expenseId
+         required: true
+         schema:
+           type: integer
+           format: int64
+      responses:
+        "204":
+          description: "Deleted"
+        "400":
+          description: "Bad request"
+        "404":
+          description: "Expense not found"
+  /user/auth:
+    post:
+      tags:
+      - "user"
+      summary: "Authenticate user - if the user does not exist, create it"
+      operationId: "authUser"
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref:  "#/components/schemas/AuthUser"
+        description: User that needs to be authenticated
+        required: true
+      responses:
+        "200":
+          content:
+           application/json:
+             schema:
+              $ref: '#/components/schemas/User'
+          description: "Ok"
+        "201":
+          content:
+           application/json:
+             schema:
+              $ref: '#/components/schemas/User'
+          description: "Created"
+  /category:
+    get:
+      tags:
+      - "category"
+      summary: "Find all categories"
+      description: "Return all categories"
+      operationId: "getCategories"
+      responses:
+        '200':
+          content:
+           application/json:
+             schema:
+              $ref: '#/components/schemas/Categories'
+          description: "Ok"
+  /currency:
+    get:
+      tags:
+      - "currency"
+      summary: "Find all currencies"
+      description: "Return all currencies"
+      operationId: "getCurrencies"
+      responses:
+        '200':
+          content:
+           application/json:
+             schema:
+              $ref: '#/components/schemas/Currencies'
+          description: "Ok"
+  /total:
+    get:
+      tags:
+      - "total"
+      summary: "Get total sum of expenses amounts"
+      description: "Return total sum of expenses for the given user id, in the given [startDate, endDate] interval"
+      operationId: "getTotal"
+      parameters:
+        - in: query
+          name: "userId"
+          description: "Id of current user"
+          required: true
+          schema: 
+            type: integer
+            format: int64
+        - in: query
+          name: currency
+          schema:
+            type: "string"
+            enum:
+            - "EUR"
+            - "USD"
+            - "RON"
+          description: Optional - The currency to which the expenses should be converted - if not specified, no conversion will happen and the expenses will be returned with their original currency and amounts
+        - in: query
+          name: startDate
+          schema:
+            type: "string"
+            format: date
+          description: Optional - Beginning of date interval from which the expenses are to be returned
+        - in: query
+          name: endDate
+          schema:
+            type: "string"
+            format: date
+          description: Optional - End of date interval from which the expenses are to be returned - if specified, startDate has to be specified as well; if not specified, expenses will be returned up until the current date
+      responses:
+        '200':
+          content:
+           application/json:
+             schema:
+              type: integer
+          description: "Ok"
+  /total/category:
+    get:
+      tags:
+      - "total"
+      summary: "Get total sum of expenses amounts"
+      description: "Return total sum of expenses for the given user id, in the given [startDate, endDate] interval"
+      operationId: "getTotalPerCategory"
+      parameters:
+        - in: query
+          name: "userId"
+          description: "Id of current user"
+          required: true
+          schema: 
+            type: integer
+            format: int64
+        - in: query
+          name: currency
+          schema:
+            type: "string"
+            enum:
+            - "EUR"
+            - "USD"
+            - "RON"
+          description: Optional - The currency to which the expenses should be converted - if not specified, no conversion will happen and the expenses will be returned with their original currency and amounts
+        - in: query
+          name: startDate
+          schema:
+            type: "string"
+            format: date
+          description: Optional - Beginning of date interval from which the expenses are to be returned
+        - in: query
+          name: endDate
+          schema:
+            type: "string"
+            format: date
+          description: Optional - End of date interval from which the expenses are to be returned - if specified, startDate has to be specified as well; if not specified, expenses will be returned up until the current date
+      responses:
+        '200':
+          content:
+           application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: "number"
+                  format: "double"
+              example:
+                HOUSING: 125.0
+                TRANSPORT: 75.5
+                HEALTH: 299.99
+                FOOD: 70
+                ENTERTAINMENT: 0
+                MISCELLANEOUS: 100.75
+          description: "Ok"
+components:
+  schemas:
+    BaseExpense:
+      type: "object"
+      properties:
+        description:
+          type: "string"
+        category:
+          $ref: '#/components/schemas/Category'
+        date:
+          type: "string"
+          format: date
+        amount:
+          type: "number"
+          format: "double"
+        currency:
+          $ref: '#/components/schemas/Currency'
+      required:
+        - category
+        - amount
+        - currency
+    Expense:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/BaseExpense'
+      properties:
+        id:
+          type: "integer"
+    Expenses:
+      type: array
+      items:
+        $ref: '#/components/schemas/Expense'
+    CreateExpense:
+      type: "object"
+      allOf:
+        - $ref: '#/components/schemas/BaseExpense'
+      properties:
+        userId:
+          type: "integer"
+      required:
+       - userId
+    User:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+        username:
+          type: "string"
+    AuthUser:
+      type: "object"
+      properties:
+        username:
+          type: "string"
+      required:
+       - username
+    Category:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+        description:
+          type: "string"
+          enum:
+          - "HEALTH"
+          - "HOUSING"
+          - "FOOD"
+          - "TRANSPORT"
+          - "ENTERTAINMENT"
+          - "MISCELLANEOUS"
+        color:
+          type: "string"
+    Categories:
+      type: array
+      items:
+        $ref: '#/components/schemas/Category'
+    Currency:
+      type: "object"
+      properties:
+        id:
+          type: "integer"
+        description:
+          type: "string"
+          enum:
+          - "EUR"
+          - "USD"
+          - "RON"
+    Currencies:
+      type: array
+      items:
+        $ref: '#/components/schemas/Currency'
