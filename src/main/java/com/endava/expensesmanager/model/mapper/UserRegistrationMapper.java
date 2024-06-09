@@ -1,8 +1,6 @@
 package com.endava.expensesmanager.model.mapper;
 
-import com.endava.expensesmanager.model.dto.UserDto;
 import com.endava.expensesmanager.model.dto.UserRegistrationDto;
-import com.endava.expensesmanager.model.entity.User;
 import com.endava.expensesmanager.model.entity.UserRegistration;
 
 public class UserRegistrationMapper {

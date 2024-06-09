@@ -1,8 +1,7 @@
 package com.endava.expensesmanager.controller;
 
-import com.endava.expensesmanager.model.dto.UserDto;
 import com.endava.expensesmanager.model.dto.UserRegistrationDto;
-import com.endava.expensesmanager.service.UserService;
+import com.endava.expensesmanager.service.UserRegistrationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,20 +9,31 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/authenticate")
 public class AuthController {
-    private final UserService userService;
+    private final UserRegistrationService userRegistrationService;
 
-    public AuthController(UserService userService) {
-        this.userService = userService;
+    public AuthController(UserRegistrationService userRegistrationService) {
+        this.userRegistrationService = userRegistrationService;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserDto> registerUser(@RequestBody UserRegistrationDto userRegistrationDto) {
+    public ResponseEntity<UserRegistrationDto> registerUser(@RequestBody UserRegistrationDto userRegistrationDto) {
 
         String name = userRegistrationDto.getName();
         String password = userRegistrationDto.getPassword();
 
-        UserDto userDto = userService.getOrCreateUserByName(name);
+        UserRegistrationDto newUser = userRegistrationService.registerUser(name,password);
 
-        return new ResponseEntity<>(userDto, HttpStatus.OK);
+        return new ResponseEntity<>(newUser, HttpStatus.OK);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> loginUser(@RequestBody UserRegistrationDto userRegistrationDto) {
+
+        String name = userRegistrationDto.getName();
+        String password = userRegistrationDto.getPassword();
+
+        String token = userRegistrationService.loginUser(name, password);
+
+        return new ResponseEntity<>(token, HttpStatus.OK);
     }
 }
